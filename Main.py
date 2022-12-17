@@ -3,6 +3,7 @@ import time
 import random
 import cv2 as cv
 import numpy as np
+import math
 from colorsys import hsv_to_rgb
 from Zombie import Zombie
 from Weapon import Weapon
@@ -24,6 +25,9 @@ def main():
     my_enemy = Enemy()
     joystick.disp.image(my_image)
     throwPos = np.array([120,210])
+    greOrder = 1
+
+    img_bosszombie = Image.open('/home/kau-esw/esw/ESW-Project/images/bosszombie.png', mode='r').convert('RGBA')
 
     
     img_zombie1 = Image.open('/home/kau-esw/esw/ESW-Project/images/zombie1.png', mode='r').convert('RGBA')
@@ -50,30 +54,39 @@ def main():
     img_hp = Image.open('/home/kau-esw/esw/ESW-Project/images/hp.png', mode='r').convert('RGBA')
     img_muzzleflash = Image.open('/home/kau-esw/esw/ESW-Project/images/muzzleflash.png', mode='r').convert('RGBA')
     img_statusbar = Image.open('/home/kau-esw/esw/ESW-Project/images/statusbar.png', mode='r').convert('RGBA')
-    img_main = Image.open('/home/kau-esw/esw/ESW-Project/images/fieldbackground.png', mode='r')       
+    img_fieldbackground = Image.open('/home/kau-esw/esw/ESW-Project/images/fieldbackground.png', mode='r')       
     img_aim = Image.open('/home/kau-esw/esw/ESW-Project/images/aim.png', mode='r').convert('RGBA')
     img_bullet = Image.open('/home/kau-esw/esw/ESW-Project/images/bullet.png', mode='r').convert('RGBA')
     img_reload = Image.open('/home/kau-esw/esw/ESW-Project/images/reload.png', mode='r').convert('RGBA')
     fnt = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 25) # 폰트, 크기
     img_grenade = Image.open('/home/kau-esw/esw/ESW-Project/images/grenade.png', mode='r').convert('RGBA')
-    img_grenadeeffect = Image.open('/home/kau-esw/esw/ESW-Project/images/grenadeeffect.png', mode='r').convert('RGBA')
+    img_grenade2 = img_grenade.transpose(Image.ROTATE_90)
+    img_grenade3 = img_grenade2.transpose(Image.ROTATE_90)
+    img_grenade4 = img_grenade3.transpose(Image.ROTATE_90)
+    
+    img_airplane = Image.open('/home/kau-esw/esw/ESW-Project/images/airplane.png', mode='r').convert('RGBA')
+    img_airbombardment = Image.open('/home/kau-esw/esw/ESW-Project/images/airbombardment.png', mode='r').convert('RGBA')
+
+    img_greeffect = Image.open('/home/kau-esw/esw/ESW-Project/images/greeffect.png', mode='r').convert('RGBA')
+    
+    img_fail = Image.open('/home/kau-esw/esw/ESW-Project/images/fail.png', mode='r')
+    img_main = Image.open('/home/kau-esw/esw/ESW-Project/images/main.png', mode='r')
+    img_kauemblem = Image.open('/home/kau-esw/esw/ESW-Project/images/kauemblem.png', mode='r')
+
 
     def Start(): # 시작 화면
-        check_start = 1
-        while check_start:
-            img_main = Image.open('/home/kau-esw/esw/ESW-Project/images/main.png', mode='r')
-            joystick.disp.image(img_main)
+        while True:
+            my_image.paste(im=img_main, box=(0,0), mask=img_main)                     
+            joystick.disp.image(my_image)
             if not joystick.button_A.value:
-                check_start = 0
                 break
             
     def Fail(): # 실패 화면
-        check_restart = 1
-        while check_restart:
-            img_fail = Image.open('/home/kau-esw/esw/ESW-Project/images/fail', mode='r')
-            joystick.disp.image(img_fail)
+        while True:
+            my_image.paste(im=img_fail, box=(0,0), mask=img_fail)                     
+            my_draw.text((140, 105), str(my_weapon.score), font=fnt, fill=(211,99,110))           
+            joystick.disp.image(my_image)
             if not joystick.button_A.value:
-                check_restart = 0
                 my_weapon.hp_list = [[0,0],[30,0],[60,0]]
                 my_weapon.score = 0
                 my_weapon.grenades = 3
@@ -88,7 +101,8 @@ def main():
     while True: # 게임 시작
         command = {'move': False, 'up_pressed': False , 'down_pressed': False, 'left_pressed': False, 'right_pressed': False} # 딕셔너리
         
-        my_image.paste(im=img_main, box=(0,0)) # 배경 Draw
+        my_image.paste(im=img_fieldbackground, box=(0,0)) # 배경 Draw
+
 
         
         if not joystick.button_U.value:  # up pressed / 조이스틱 버튼 눌림 감지
@@ -107,14 +121,20 @@ def main():
             command['right_pressed'] = True
             command['move'] = True
 
-        if not joystick.button_A.value and len(my_weapon.bullets_list) != 0 and my_weapon.FireControl() == True: # A pressed = Shot
-            my_image.paste(img_muzzleflash, tuple(my_weapon.aimPos), mask=img_muzzleflash)   # 총구 화염 Draw
+        # A pressed = Fire
+        if not joystick.button_A.value and joystick.button_B.value and len(my_weapon.bullets_list) != 0 and my_weapon.FireControl() == True:
+            my_image.paste(img_muzzleflash, tuple(my_weapon.aimPos-25), mask=img_muzzleflash)   # 총구 화염 Draw
             my_weapon.collision_check(my_enemy.zombies_list, my_enemy, "aim")
             my_weapon.Fire()
-
-        if not joystick.button_B.value and my_weapon.ThrowControl() == True:
+            
+        # B Pressed = Grenade Throw
+        if not joystick.button_B.value and my_weapon.ThrowControl() and joystick.button_A.value == True: 
             if my_weapon.grenades != 0:
-                my_weapon.Throw() 
+                my_weapon.Throw()
+                
+        # A + B Pressed = Air Bombardment
+        if not joystick.button_A.value and not joystick.button_B.value: # Air Bombardment
+            my_weapon.airBombardment = True
 
            
             
@@ -126,39 +146,46 @@ def main():
         if my_enemy.ZombieSpawn(): # 좀비 스폰
             my_enemy.zombies_list.append(Zombie(my_enemy.first_spawn_position[my_enemy.zombie_turn]))
 
-
+        # my_draw.polygon((my_weapon.aimCenter[0], my_weapon.aimCenter[1],
+        #                     my_weapon.aimCenter[0], my_weapon.aimCenter[3],
+        #                     my_weapon.aimCenter[2], my_weapon.aimCenter[3],
+        #                     my_weapon.aimCenter[2], my_weapon.aimCenter[1]), fill=(0,0,0))
                     
         for zombie in my_enemy.zombies_list: # 좀비 Draw / Z값 최대 약 60
+            # my_draw.polygon((zombie.center[0], zombie.center[1],
+            #                 zombie.center[0], zombie.center[3],
+            #                 zombie.center[2], zombie.center[3],
+            #                 zombie.center[2], zombie.center[1]), fill=(0,0,0))
             if zombie.zPos < 3:
-                my_image.paste(im=img_zombie1, box=(tuple(zombie.spawn_position)), mask=img_zombie1)
+                my_image.paste(im=img_zombie1, box=(tuple(zombie.spawn_position-32)), mask=img_zombie1)
             elif zombie.zPos < 6:
-                my_image.paste(im=img_zombie2, box=(tuple(zombie.spawn_position)), mask=img_zombie2)
+                my_image.paste(im=img_zombie2, box=(tuple(zombie.spawn_position-32)), mask=img_zombie2)
             elif zombie.zPos < 9:
-                my_image.paste(im=img_zombie3, box=(tuple(zombie.spawn_position)), mask=img_zombie3)
+                my_image.paste(im=img_zombie3, box=(tuple(zombie.spawn_position-32)), mask=img_zombie3)
             elif zombie.zPos < 12:
-                my_image.paste(im=img_zombie4, box=(tuple(zombie.spawn_position)), mask=img_zombie4)
+                my_image.paste(im=img_zombie4, box=(tuple(zombie.spawn_position-32)), mask=img_zombie4)
             elif zombie.zPos < 15:
-                my_image.paste(im=img_zombie5, box=(tuple(zombie.spawn_position)), mask=img_zombie5)
+                my_image.paste(im=img_zombie5, box=(tuple(zombie.spawn_position-32)), mask=img_zombie5)
             elif zombie.zPos < 18:
-                my_image.paste(im=img_zombie6, box=(tuple(zombie.spawn_position)), mask=img_zombie6)
+                my_image.paste(im=img_zombie6, box=(tuple(zombie.spawn_position-32)), mask=img_zombie6)
             elif zombie.zPos < 21:
-                my_image.paste(im=img_zombie7, box=(tuple(zombie.spawn_position)), mask=img_zombie7)
+                my_image.paste(im=img_zombie7, box=(tuple(zombie.spawn_position-32)), mask=img_zombie7)
             elif zombie.zPos < 24:
-                my_image.paste(im=img_zombie8, box=(tuple(zombie.spawn_position)), mask=img_zombie8)
+                my_image.paste(im=img_zombie8, box=(tuple(zombie.spawn_position-32)), mask=img_zombie8)
             elif zombie.zPos < 27:
-                my_image.paste(im=img_zombie9, box=(tuple(zombie.spawn_position)), mask=img_zombie9)
+                my_image.paste(im=img_zombie9, box=(tuple(zombie.spawn_position-32)), mask=img_zombie9)
             elif zombie.zPos < 31:
-                my_image.paste(im=img_zombie10, box=(tuple(zombie.spawn_position)), mask=img_zombie10)
+                my_image.paste(im=img_zombie10, box=(tuple(zombie.spawn_position-32)), mask=img_zombie10)
             elif zombie.zPos < 35:
-                my_image.paste(im=img_zombie11, box=(tuple(zombie.spawn_position)), mask=img_zombie11)
+                my_image.paste(im=img_zombie11, box=(tuple(zombie.spawn_position-32)), mask=img_zombie11)
             elif zombie.zPos < 40:
-                my_image.paste(im=img_zombie12, box=(tuple(zombie.spawn_position)), mask=img_zombie12)
+                my_image.paste(im=img_zombie12, box=(tuple(zombie.spawn_position-32)), mask=img_zombie12)
             elif zombie.zPos < 45:
-                my_image.paste(im=img_zombie13, box=(tuple(zombie.spawn_position)), mask=img_zombie13)
+                my_image.paste(im=img_zombie13, box=(tuple(zombie.spawn_position-32)), mask=img_zombie13)
             elif zombie.zPos < 50:
-                my_image.paste(im=img_zombie14, box=(tuple(zombie.spawn_position)), mask=img_zombie14)
+                my_image.paste(im=img_zombie14, box=(tuple(zombie.spawn_position-32)), mask=img_zombie14)
             else:
-                my_image.paste(im=img_zombie15, box=(tuple(zombie.spawn_position)), mask=img_zombie15)
+                my_image.paste(im=img_zombie15, box=(tuple(zombie.spawn_position-32)), mask=img_zombie15)
 
             zombie.move()
             if zombie.attack(): # 좀비가 아래 상태바 통과 시
@@ -168,40 +195,53 @@ def main():
                     Fail()
                     
         if my_weapon.nowThrowing == True: # 수류탄 던지기
-            if my_weapon.grePos[1] < throwPos[1]:
+            if my_weapon.greTargetPos[1] < throwPos[1]:
                 # 수류탄 Draw
-                my_image.paste(img_grenade, tuple(throwPos), mask=img_grenade)   
-                throwPos[1] -= 8
+                if greOrder == 4:
+                    greOrder = 1
+                else:
+                    greOrder += 1
+                greList = {1 : img_grenade, 2 : img_grenade2, 3 : img_grenade3, 4 : img_grenade4}
+                my_image.paste(greList[greOrder], tuple(throwPos-20), mask=greList[greOrder])
+
+                
+                # 수류탄 xy 좌표 이동
+                throwPos[1] -= math.sin(math.radians(my_weapon.throwAngle)) * 8 * -1
+                if my_weapon.greTargetPos[0] < throwPos[0]:
+                    throwPos[0] -= math.cos(math.radians(my_weapon.throwAngle)) * 8
+                else:
+                    throwPos[0] += math.cos(math.radians(my_weapon.throwAngle)) * 8
+
             else:
                 # 수류탄 이펙트 Draw
-                my_image.paste(img_grenadeeffect, tuple(my_weapon.grePos-60), mask=img_grenadeeffect)  
-                my_image.paste(img_grenadeeffect, tuple([my_weapon.grePos[0]-40, my_weapon.grePos[1]-10]), mask=img_grenadeeffect)
-                my_image.paste(img_grenadeeffect, tuple([my_weapon.grePos[0], my_weapon.grePos[1]-50]), mask=img_grenadeeffect)
+                my_image.paste(img_greeffect, tuple(my_weapon.greTargetPos-75), mask=img_greeffect)  
                 my_weapon.collision_check(my_enemy.zombies_list, my_enemy, "gre") # 충돌 확인
                 
                 # my_draw.polygon((my_weapon.greCenter[0], my_weapon.greCenter[1],
                 #                  my_weapon.greCenter[0], my_weapon.greCenter[3],
                 #                  my_weapon.greCenter[2], my_weapon.greCenter[3],
                 #                  my_weapon.greCenter[2], my_weapon.greCenter[1]), fill=(0,0,0))
-                # my_draw.polygon((my_weapon.greCenter[0], my_weapon.greCenter[1],
-                #                  my_weapon.greCenter[0], my_weapon.greCenter[3],
-                #                  my_weapon.greCenter[2], my_weapon.greCenter[3],
-                #                  my_weapon.greCenter[2], my_weapon.greCenter[1]), fill=(0,0,0))
-                # my_draw.polygon((my_weapon.greCenter[0], my_weapon.greCenter[1],
-                #                  my_weapon.greCenter[0], my_weapon.greCenter[3],
-                #                  my_weapon.greCenter[2], my_weapon.greCenter[3],
-                #                  my_weapon.greCenter[2], my_weapon.greCenter[1]), fill=(0,0,0))
-                # my_draw.polygon((my_weapon.greCenter[0], my_weapon.greCenter[1],
-                #                  my_weapon.greCenter[0], my_weapon.greCenter[3],
-                #                  my_weapon.greCenter[2], my_weapon.greCenter[3],
-                #                  my_weapon.greCenter[2], my_weapon.greCenter[1]), fill=(0,0,0))
-                # my_draw.polygon((my_weapon.greCenter[0], my_weapon.greCenter[1],
-                #                  my_weapon.greCenter[0], my_weapon.greCenter[3],
-                #                  my_weapon.greCenter[2], my_weapon.greCenter[3],
-                #                  my_weapon.greCenter[2], my_weapon.greCenter[1]), fill=(0,0,0))
+
 
                 throwPos = np.array([120,210])
                 my_weapon.nowThrowing = False
+                
+        if my_weapon.airBombardment == True:
+
+            randXPos = random.randint(-115,55)
+            randYPos = random.randint(-95,35)
+            my_image.paste(img_airbombardment, box = (my_weapon.airplanePos[0]+randXPos, my_weapon.airplanePos[1]+randYPos), mask=img_airbombardment) # 70x60
+            randXPos = random.randint(-115,55)
+            randYPos = random.randint(-95,35)
+            my_image.paste(img_airbombardment, box = (my_weapon.airplanePos[0]+randXPos, my_weapon.airplanePos[1]+randYPos), mask=img_airbombardment) # 70x60
+            randXPos = random.randint(-115,55)
+            randYPos = random.randint(-95,35)
+            my_image.paste(img_airbombardment, box = (my_weapon.airplanePos[0]+randXPos, my_weapon.airplanePos[1]+randYPos), mask=img_airbombardment) # 70x60
+
+            my_image.paste(img_airplane, box = (my_weapon.airplanePos[0]-80, my_weapon.airplanePos[1]-65), mask=img_airplane) # 160x130
+            my_weapon.airbombardment()
+            my_weapon.collision_check(my_enemy.zombies_list, my_enemy, "air") # 충돌 확인
+
                     
         
         # 상태 바 Draw
@@ -239,7 +279,7 @@ def main():
             my_image.paste(im=img_reload, box=(140, 210),mask=img_reload)            
         
         # 에임 드로우
-        my_image.paste(img_aim, tuple(my_weapon.aimPos), mask=img_aim) 
+        my_image.paste(img_aim, tuple(my_weapon.aimPos-25), mask=img_aim) 
 
         joystick.disp.image(my_image)
         

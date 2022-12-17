@@ -1,13 +1,15 @@
 import numpy as np
 import time
+import math
 
 class Weapon:
     def __init__(self, width, height):
         self.state = None
         self.weaponState = None
+        self.airBombardment = False
         
-        self.aimPos = np.array([int(width/2)-25, int(height/2)-25]) # Aim 위치
-        self.aimCenter = np.array([self.aimPos[0]+15, self.aimPos[1]+15 , self.aimPos[0]+35, self.aimPos[1]+35]) # Fire 시 충돌 범위
+        self.aimPos = np.array([int(width/2), int(height/2)]) # Aim 위치
+        self.aimCenter = np.array([self.aimPos[0]-15, self.aimPos[1]-15 , self.aimPos[0]+15, self.aimPos[1]+15]) # Fire 시 충돌 범위
         self.score = 0
         self.hp_list = [[0,0],[30,0],[60,0]] # 체력 리스트
         
@@ -19,9 +21,14 @@ class Weapon:
         # Throw - grenade
         self.throw_speed = 0
         self.grenades = 3
-        self.grePos = 0
+        self.greTargetPos = 0
         self.greCenter = 0
         self.nowThrowing = False
+        self.throwAngle = 0
+        
+        # Air Bombardment
+        self.airplanePos = np.array([120, 270])
+        self.airplaneCenter = np.array([self.airplanePos[0]-200, self.airplanePos[1]-65, self.airplanePos[0]+200, self.airplanePos[1]+65])
         
     def move(self, command = None):
         if command['move'] == False:
@@ -43,7 +50,7 @@ class Weapon:
                 self.aimPos[0] += 10
                 
         # aimCenter 업데이트
-        self.aimCenter = np.array([self.aimPos[0]+15, self.aimPos[1]+15 , self.aimPos[0]+35, self.aimPos[1]+35])
+        self.aimCenter = np.array([self.aimPos[0]-15, self.aimPos[1]-15 , self.aimPos[0]+15, self.aimPos[1]+15]) # Fire 시 충돌 범위
     
     def Reload(self):
         self.bullets_list = [(-5, 210), (8, 210), (21, 210), (34, 210), (47, 210)]        
@@ -75,8 +82,8 @@ class Weapon:
         if self.grenades != 0:
             self.weaponState = "throw"
             self.grenades -= 1
-            self.grePos = self.aimPos.copy()
-            self.greCenter = np.array([self.grePos[0]-50, self.grePos[1]-50, self.grePos[0]+100, self.grePos[1]+100])
+            self.greTargetPos = self.aimPos.copy()
+            self.greCenter = np.array([self.greTargetPos[0]-75, self.greTargetPos[1]-75, self.greTargetPos[0]+75, self.greTargetPos[1]+75])
 
             self.nowThrowing = True
             
@@ -85,6 +92,12 @@ class Weapon:
             self.throw_speed += 1
         if self.weaponState == "throw": # Throw 시
             self.throw_speed = 0
+            # 각도 계산
+            if self.greTargetPos[0] > 120:
+                temp = math.atan2(self.greTargetPos[1]-210, self.greTargetPos[0]-120)
+            else:
+                temp = math.atan2(self.greTargetPos[1]-210, 120-self.greTargetPos[0])
+            self.throwAngle = math.degrees(temp)
             self.weaponState = None
         if self.throw_speed == 50: # Throw 가능
             return True
@@ -93,9 +106,11 @@ class Weapon:
     def collision_check(self, zombies, my_enemy, check):
         for zombie in zombies:
             if check == "aim":
-                collision = self.overlap(self.aimCenter, zombie.position, "aim")
+                collision = self.overlap(self.aimCenter, zombie.center, "aim")
             elif check == "gre":
-                collision = self.overlap(self.greCenter, zombie.position, "gre")
+                collision = self.overlap(self.greCenter, zombie.center, "gre")
+            elif check == "air":
+                collision = self.overlap(self.airplaneCenter, zombie.center, "air")
             
             if collision:
                 my_enemy.zombies_list.remove(zombie)
@@ -104,11 +119,18 @@ class Weapon:
                 
     def overlap(self, ego_aimPos, other_aimPos, check): # ego = 자기 자신
         if check == "aim":
-            print(check)
             return ego_aimPos[0] > other_aimPos[0] and ego_aimPos[1] > other_aimPos[1] \
                  and ego_aimPos[2] < other_aimPos[2] and ego_aimPos[3] < other_aimPos[3]
                  
-        elif check == "gre":
-            print(check)
+        else:
             return ego_aimPos[0] < other_aimPos[0] and ego_aimPos[1] < other_aimPos[1] \
                  and ego_aimPos[2] > other_aimPos[2] and ego_aimPos[3] > other_aimPos[3]
+                 
+    def airbombardment(self):
+        if self.airplanePos[1] > -130:
+            self.airplanePos[1] -= 5
+            self.airplaneCenter = np.array([self.airplanePos[0]-200, self.airplanePos[1]-65, self.airplanePos[0]+200, self.airplanePos[1]+65])
+
+        else:
+            self.airplanePos = np.array([120, 270])
+            self.airBombardment = False
