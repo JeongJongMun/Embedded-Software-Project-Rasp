@@ -236,6 +236,7 @@ def main():
                 if len(my_weapon.hp_list) <= 0: # 체력이 0이 되면 Fail
                     Fail()
 
+
                     
         if my_weapon.nowThrowing == True: # 수류탄 던지기
             if my_weapon.greTargetPos[1] < throwPos[1]:
