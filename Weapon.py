@@ -115,6 +115,10 @@ class Weapon:
             if collision:
                 my_enemy.zombies_list.remove(zombie)
                 self.score += 100
+        collision = self.overlap(self.aimCenter, my_enemy.rockCenter, "aim")
+        if collision:
+            my_enemy.rock = False
+            my_enemy.rockPos = my_enemy.bossPos
 
                 
     def overlap(self, ego_aimPos, other_aimPos, check): # ego = 자기 자신

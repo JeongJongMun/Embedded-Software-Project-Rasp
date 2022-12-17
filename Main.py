@@ -25,7 +25,11 @@ def main():
     greRotation = 1
 
     img_bosszombie = Image.open('/home/kau-esw/esw/ESW-Project/images/bosszombie.png', mode='r').convert('RGBA')
-    
+    img_rock1 = Image.open('/home/kau-esw/esw/ESW-Project/images/rock.png', mode='r').convert('RGBA')
+    img_rock2 = img_rock1.transpose(Image.ROTATE_90)
+    img_rock3 = img_rock2.transpose(Image.ROTATE_90)
+    img_rock4 = img_rock3.transpose(Image.ROTATE_90)
+
     img_zombie1 = Image.open('/home/kau-esw/esw/ESW-Project/images/zombie1.png', mode='r').convert('RGBA')
     img_zombie2 = Image.open('/home/kau-esw/esw/ESW-Project/images/zombie2.png', mode='r').convert('RGBA')
     img_zombie3 = Image.open('/home/kau-esw/esw/ESW-Project/images/zombie3.png', mode='r').convert('RGBA')
@@ -45,7 +49,6 @@ def main():
     img_grenadetimer1 = Image.open('/home/kau-esw/esw/ESW-Project/images/grenadetimer1.png', mode='r').convert('RGBA')
     img_grenadetimer2 = Image.open('/home/kau-esw/esw/ESW-Project/images/grenadetimer2.png', mode='r').convert('RGBA')
     img_grenadetimer3 = Image.open('/home/kau-esw/esw/ESW-Project/images/grenadetimer3.png', mode='r').convert('RGBA')
-
 
     img_hp = Image.open('/home/kau-esw/esw/ESW-Project/images/hp.png', mode='r').convert('RGBA')
     img_muzzleflash = Image.open('/home/kau-esw/esw/ESW-Project/images/muzzleflash.png', mode='r').convert('RGBA')
@@ -104,6 +107,10 @@ def main():
             my_enemy.bossStage = True
             my_image.paste(im=img_bosszombie, box=(tuple(my_enemy.bossPos-50)), mask=img_bosszombie)
             my_enemy.BossMove()
+            if my_enemy.bossPhase == 1:
+                my_enemy.BossPhaseOne(my_weapon)
+                if my_enemy.rock == True:
+                    my_image.paste(im=img_rock1, box=(tuple(my_enemy.rockPos-25)), mask=img_rock1)
         
         if not joystick.button_U.value:  # up pressed / 조이스틱 버튼 눌림 감지
             command['up_pressed'] = True
