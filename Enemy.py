@@ -7,7 +7,7 @@ class Enemy:
         # Zombie
         self.zombies_list = [] # 좀비 리스트
         self.zombie_spawn_time = 30 # 좀비 스폰 시간
-        self.zombie_spawn_position =((50,-30),(90,-30),(130,-30)) # 좀비 스폰 위치
+        self.zombie_spawn_position =((60,-30),(90,-30),(120,-30)) # 좀비 스폰 위치
         self.zombie_turn = 0 # 좀비 스폰 위치 순서
         
         # Boss
@@ -17,11 +17,10 @@ class Enemy:
         self.bossStage = False
         self.rockList = []
         self.rockSpawnTime = 0
-        self.rockSpawnPos = ((50,80),(90,80),(130,80))
-        self.bossPhase = 1
+        self.rockSpawnPos = ((70,60),(110,60),(150,60))
         
     def ZombieSpawn(self):
-        if self.zombie_spawn_time == 50 and self.bossStage == False: # 50 마다 좀비 스폰
+        if self.zombie_spawn_time == 40 and self.bossStage == False: # 50 마다 좀비 스폰
             self.zombie_spawn_time = 0
             self.zombie_turn = random.randint(0,2) # 좀비 스폰 위치 랜덤으로 설정
             return True
@@ -38,20 +37,12 @@ class Enemy:
         elif self.bossPos[1] < 80: # 보스 아래로 내려오기
             self.bossPos[1] += 3
             self.bossCenter = np.array([self.bossPos[0]-50, self.bossPos[1]-50, self.bossPos[0]+50, self.bossPos[1]+50])
-            
-        if self.bossHp <= 0:
-            self.bossPos[1] -= 3
 
-    def BossPhaseOne(self, my_weapon):
-        if self.rockSpawnTime == 50: # 50 마다 Rock 스폰
+    def BossAttack(self):
+        if self.rockSpawnTime == 30: # 30 마다 Rock 스폰
             self.rockSpawnTime = 0
             self.zombie_turn = random.randint(0,2) # 스폰 위치 랜덤으로 설정
             return True
         else:
-            self.zombie_spawn_time += 1
+            self.rockSpawnTime += 1
             return False
-        
-
-        
-    def BossPhaseOTwo(self, my_weapon):
-        print("ZombieSpawn")

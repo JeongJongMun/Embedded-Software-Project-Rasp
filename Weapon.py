@@ -128,22 +128,22 @@ class Weapon:
             if collision:
                 my_enemy.rockList.remove(rock)
                 self.score += 300
-                
-        if check == "aim":
-            collision = self.overlap(self.aimCenter, my_enemy.bossCenter, "aim")
-        elif check == "gre":
-            collision = self.overlap(self.greCenter, my_enemy.bossCenter, "gre")
-        elif check == "air":
-            collision = self.overlap(self.airplaneCenter, my_enemy.bossCenter, "air")
-            
-        if collision:
+        if my_enemy.bossStage == True:   
             if check == "aim":
-                my_enemy.bossHp -= 5
+                collision = self.overlap(self.aimCenter, my_enemy.bossCenter, "aim")
             elif check == "gre":
-                my_enemy.bossHp -= 10
+                collision = self.overlap(self.greCenter, my_enemy.bossCenter, "gre")
             elif check == "air":
-                my_enemy.bossHp -= 2
-            print("Boss HP : ",my_enemy.bossHp)
+                collision = self.overlap(self.airplaneCenter, my_enemy.bossCenter, "air")
+                
+            if collision:
+                if check == "aim":
+                    my_enemy.bossHp -= 5
+                elif check == "gre":
+                    my_enemy.bossHp -= 10
+                elif check == "air":
+                    my_enemy.bossHp -= 3
+                print("Boss HP : ",my_enemy.bossHp)
 
                 
     def overlap(self, ego_aimPos, other_aimPos, check): # ego = 자기 자신
@@ -162,4 +162,5 @@ class Weapon:
 
         else:
             self.airplanePos = np.array([120, 270])
+            self.airplaneCenter = np.array([self.airplanePos[0]-200, self.airplanePos[1]-65, self.airplanePos[0]+200, self.airplanePos[1]+65])
             self.airbombardment = False

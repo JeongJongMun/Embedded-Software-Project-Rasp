@@ -24,6 +24,7 @@ def main():
     joystick.disp.image(my_image)
     throwPos = np.array([120,210])
     greRotation = 1
+    rockRotation = 1
     
 
     img_bosszombie = Image.open('/home/kau-esw/esw/ESW-Project/images/bosszombie.png', mode='r').convert('RGBA')
@@ -96,8 +97,12 @@ def main():
                 my_weapon.bullets_list.clear()
                 my_enemy.rockList.clear()
                 my_weapon.Reload()
-                my_weapon.bossHp = 100
+                my_enemy.bossHp = 100
                 my_weapon.airbombardmentCount = True
+                my_enemy.bossStage = False
+                my_enemy.bossPos = np.array([120,0])
+                my_enemy.bossCenter = np.array([my_enemy.bossPos[0]-50, my_enemy.bossPos[1]-50,
+                                                 my_enemy.bossPos[0]+50, my_enemy.bossPos[1]+50])
                 break
     def Finish(): # 성공 화면
         while True:
@@ -112,9 +117,14 @@ def main():
                 my_weapon.bullets_list.clear()
                 my_enemy.rockList.clear()
                 my_weapon.Reload()
-                my_weapon.bossHp = 100
+                my_enemy.bossHp = 100
                 my_weapon.airbombardmentCount = True
+                my_enemy.bossStage = False
+                my_enemy.bossPos = np.array([120,0])
+                my_enemy.bossCenter = np.array([my_enemy.bossPos[0]-50, my_enemy.bossPos[1]-50,
+                                                 my_enemy.bossPos[0]+50, my_enemy.bossPos[1]+50])
                 break    
+            
     Start() # 메인화면 시작
         
     
@@ -124,27 +134,26 @@ def main():
         my_image.paste(im=img_fieldbackground, box=(0,0)) # 배경 Draw
 
         # Boss
-        if my_weapon.score >= 100:
+        if my_weapon.score >= 0:
             if my_enemy.BossMove() == "finish":
+                my_weapon.score += 10000
                 Finish()
             my_enemy.bossStage = True
             my_image.paste(im=img_bosszombie, box=(tuple(my_enemy.bossPos-50)), mask=img_bosszombie)
             my_enemy.BossMove()
-            if my_enemy.bossPhase == 1:
-                my_enemy.BossPhaseOne(my_weapon)
-                if my_enemy.BossPhaseOne(my_weapon):
-                    my_enemy.rockList.append(Rock(my_enemy.rockSpawnPos[my_enemy.zombie_turn]))
-            elif my_enemy.bossPhase == 2:
-                my_enemy.BossPhaseTwo(my_weapon)
+            my_enemy.BossAttack()
+            if my_enemy.BossAttack():
+                my_enemy.rockList.append(Rock(my_enemy.rockSpawnPos[my_enemy.zombie_turn]))
+
         
         # Phase One Rock Draw
         for rock in my_enemy.rockList:
-            if greRotation == 4:
-                greRotation = 1
+            if rockRotation == 4:
+                rockRotation = 1
             else:
-                greRotation += 1
+                rockRotation += 1
             rockList = {1 : img_rock1, 2 : img_rock2, 3 : img_rock3, 4 : img_rock4}
-            my_image.paste(im=rockList[greRotation], box=(tuple(rock.spawn_position-25)), mask=rockList[greRotation])
+            my_image.paste(im=rockList[rockRotation], box=(tuple(rock.spawn_position-25)), mask=rockList[rockRotation])
             
 
             rock.move() # Rock Move
