@@ -18,6 +18,7 @@ class Weapon:
         self.reload_speed = 0
         self.bullets_list = [(-5, 210), (8, 210), (21, 210), (34, 210), (47, 210)]        
         self.fireDamage = 1
+        
         # Throw - grenade
         self.throw_speed = 0
         self.grenades = 3
@@ -63,11 +64,10 @@ class Weapon:
             self.reload_speed = 0
             self.Reload()
         
-
     def Fire(self):
         if len(self.bullets_list) != 0:
             self.bullets_list.pop()
-        self.weaponState = "fire"
+            self.weaponState = "fire"
         
     def FireControl(self):
         if self.fire_speed < 7: # Fire 속도 == while문이 7번 돌때마다 1발
@@ -83,7 +83,7 @@ class Weapon:
             self.weaponState = "throw"
             self.grenades -= 1
             self.greTargetPos = self.aimPos.copy()
-            self.greCenter = np.array([self.greTargetPos[0]-75, self.greTargetPos[1]-75, self.greTargetPos[0]+75, self.greTargetPos[1]+75])
+            self.greCenter = np.array([self.greTargetPos[0]-100, self.greTargetPos[1]-100, self.greTargetPos[0]+100, self.greTargetPos[1]+100])
 
             self.nowThrowing = True
             
@@ -126,7 +126,7 @@ class Weapon:
             return ego_aimPos[0] < other_aimPos[0] and ego_aimPos[1] < other_aimPos[1] \
                  and ego_aimPos[2] > other_aimPos[2] and ego_aimPos[3] > other_aimPos[3]
                  
-    def airbombardment(self):
+    def Airbombardment(self):
         if self.airplanePos[1] > -130:
             self.airplanePos[1] -= 5
             self.airplaneCenter = np.array([self.airplanePos[0]-200, self.airplanePos[1]-65, self.airplanePos[0]+200, self.airplanePos[1]+65])
