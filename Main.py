@@ -9,6 +9,7 @@ from Zombie import Zombie
 from Weapon import Weapon
 from Enemy import Enemy
 from Joystick import Joystick
+from Rock import Rock
 
 # 총 맞을시 피 튀는거
 
@@ -23,6 +24,7 @@ def main():
     joystick.disp.image(my_image)
     throwPos = np.array([120,210])
     greRotation = 1
+    
 
     img_bosszombie = Image.open('/home/kau-esw/esw/ESW-Project/images/bosszombie.png', mode='r').convert('RGBA')
     img_rock1 = Image.open('/home/kau-esw/esw/ESW-Project/images/rock.png', mode='r').convert('RGBA')
@@ -68,6 +70,7 @@ def main():
 
     img_greeffect = Image.open('/home/kau-esw/esw/ESW-Project/images/greeffect.png', mode='r').convert('RGBA')
     
+    img_finish = Image.open('/home/kau-esw/esw/ESW-Project/images/finish.png', mode='r')
     img_fail = Image.open('/home/kau-esw/esw/ESW-Project/images/fail.png', mode='r')
     img_main = Image.open('/home/kau-esw/esw/ESW-Project/images/main.png', mode='r')
     img_kauemblem = Image.open('/home/kau-esw/esw/ESW-Project/images/kauemblem.png', mode='r')
@@ -91,9 +94,27 @@ def main():
                 my_weapon.grenades = 3
                 my_enemy.zombies_list.clear()
                 my_weapon.bullets_list.clear()
+                my_enemy.rockList.clear()
                 my_weapon.Reload()
+                my_weapon.bossHp = 100
+                my_weapon.airbombardmentCount = True
                 break
-    
+    def Finish(): # 성공 화면
+        while True:
+            my_image.paste(im=img_finish, box=(0,0), mask=img_finish)                     
+            my_draw.text((140, 105), str(my_weapon.score), font=fnt, fill=(211,99,110))           
+            joystick.disp.image(my_image)
+            if not joystick.button_A.value:
+                my_weapon.hp_list = [[0,0],[30,0],[60,0]]
+                my_weapon.score = 0
+                my_weapon.grenades = 3
+                my_enemy.zombies_list.clear()
+                my_weapon.bullets_list.clear()
+                my_enemy.rockList.clear()
+                my_weapon.Reload()
+                my_weapon.bossHp = 100
+                my_weapon.airbombardmentCount = True
+                break    
     Start() # 메인화면 시작
         
     
@@ -103,15 +124,37 @@ def main():
         my_image.paste(im=img_fieldbackground, box=(0,0)) # 배경 Draw
 
         # Boss
-        if my_weapon.score == 100:
+        if my_weapon.score >= 100:
+            if my_enemy.BossMove() == "finish":
+                Finish()
             my_enemy.bossStage = True
             my_image.paste(im=img_bosszombie, box=(tuple(my_enemy.bossPos-50)), mask=img_bosszombie)
             my_enemy.BossMove()
             if my_enemy.bossPhase == 1:
                 my_enemy.BossPhaseOne(my_weapon)
-                if my_enemy.rock == True:
-                    my_image.paste(im=img_rock1, box=(tuple(my_enemy.rockPos-25)), mask=img_rock1)
+                if my_enemy.BossPhaseOne(my_weapon):
+                    my_enemy.rockList.append(Rock(my_enemy.rockSpawnPos[my_enemy.zombie_turn]))
+            elif my_enemy.bossPhase == 2:
+                my_enemy.BossPhaseTwo(my_weapon)
         
+        # Phase One Rock Draw
+        for rock in my_enemy.rockList:
+            if greRotation == 4:
+                greRotation = 1
+            else:
+                greRotation += 1
+            rockList = {1 : img_rock1, 2 : img_rock2, 3 : img_rock3, 4 : img_rock4}
+            my_image.paste(im=rockList[greRotation], box=(tuple(rock.spawn_position-25)), mask=rockList[greRotation])
+            
+
+            rock.move() # Rock Move
+            
+            if rock.spawn_position[1] > 210: # Rock 아래 상태바 통과 시 attack
+                rock.Attack(rock, my_enemy, my_weapon)
+                if len(my_weapon.hp_list) <= 0: # 체력이 0이 되면 Fail
+                    Fail()
+            
+       
         if not joystick.button_U.value:  # up pressed / 조이스틱 버튼 눌림 감지
             command['up_pressed'] = True
             command['move'] = True
@@ -131,7 +174,7 @@ def main():
         # A pressed = Fire
         if not joystick.button_A.value and joystick.button_B.value and len(my_weapon.bullets_list) != 0 and my_weapon.FireControl() == True:
             my_image.paste(img_muzzleflash, tuple(my_weapon.aimPos-25), mask=img_muzzleflash)   # 총구 화염 Draw
-            my_weapon.collision_check(my_enemy.zombies_list, my_enemy, "aim")
+            my_weapon.collision_check(my_enemy, "aim")
             my_weapon.Fire()
             
         # B Pressed = Grenade Throw
@@ -139,8 +182,9 @@ def main():
             my_weapon.Throw()
                 
         # A + B Pressed = Air Bombardment
-        if not joystick.button_A.value and not joystick.button_B.value: # Air Bombardment
-            my_weapon.airBombardment = True
+        if not joystick.button_A.value and not joystick.button_B.value and my_weapon.airbombardmentCount == True: # Air Bombardment
+            my_weapon.airbombardment = True
+            my_weapon.airbombardmentCount = False
 
            
         my_weapon.move(command) # 캐릭터 무브 함수에 커맨드를 넣어줌
@@ -214,7 +258,8 @@ def main():
             else:
                 # 수류탄 이펙트 Draw
                 my_image.paste(img_greeffect, tuple(my_weapon.greTargetPos-75), mask=img_greeffect)  
-                my_weapon.collision_check(my_enemy.zombies_list, my_enemy, "gre") # 충돌 확인
+                my_weapon.collision_check(my_enemy, "gre") # 충돌 확인
+
                 
                 # my_draw.polygon((my_weapon.greCenter[0], my_weapon.greCenter[1],
                 #                  my_weapon.greCenter[0], my_weapon.greCenter[3],
@@ -225,7 +270,7 @@ def main():
                 throwPos = np.array([120,210])
                 my_weapon.nowThrowing = False
                 
-        if my_weapon.airBombardment == True:
+        if my_weapon.airbombardment == True:
             randXPos = random.randint(-115,55)
             randYPos = random.randint(-95,35)
             my_image.paste(img_airbombardment, box = (my_weapon.airplanePos[0]+randXPos, my_weapon.airplanePos[1]+randYPos), mask=img_airbombardment) # 70x60
@@ -238,7 +283,7 @@ def main():
 
             my_image.paste(img_airplane, box = (my_weapon.airplanePos[0]-80, my_weapon.airplanePos[1]-65), mask=img_airplane) # 160x130
             my_weapon.Airbombardment()
-            my_weapon.collision_check(my_enemy.zombies_list, my_enemy, "air") # 충돌 확인
+            my_weapon.collision_check(my_enemy, "air") # 충돌 확인
 
                     
         
