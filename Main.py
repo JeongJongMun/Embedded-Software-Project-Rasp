@@ -132,8 +132,8 @@ def main():
         
         my_image.paste(im=img_fieldbackground, box=(0,0)) # 배경 Draw
 
-        # Boss : 3000 점 이상 획득 시 시작
-        if my_character.score >= 3000:
+        # Boss : 2000 점 이상 획득 시 시작
+        if my_character.score >= 1000:
             if my_enemy.BossMove() == "finish": # 보스 물리침
                 my_character.score += 10000
                 Finish()

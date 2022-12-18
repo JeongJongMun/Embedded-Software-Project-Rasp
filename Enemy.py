@@ -21,11 +21,12 @@ class Enemy:
         
     # 좀비 스폰 함수
     def ZombieSpawn(self):
-        if self.zombieSpawnTime == 40 and self.bossStage == False: # 40 마다 좀비 스폰
+        print(self.zombieSpawnTime)
+        if self.zombieSpawnTime >= 40 and self.bossStage == False: # 40 마다 좀비 스폰
             self.zombieSpawnTime = random.randint(0,30) # 40 ~ 10 사이 시간 랜덤으로 좀비 스폰
             self.zombie_turn = random.randint(0,2) # 좀비 스폰 위치 랜덤으로 설정
             return True
-        else:
+        elif self.zombieSpawnTime < 40:
             self.zombieSpawnTime += 1
             return False
     
