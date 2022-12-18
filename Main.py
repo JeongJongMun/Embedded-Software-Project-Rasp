@@ -132,8 +132,8 @@ def main():
         
         my_image.paste(im=img_fieldbackground, box=(0,0)) # 배경 Draw
 
-        # Boss : 2000 점 이상 획득 시 시작
-        if my_character.score >= 1000:
+        # Boss : 3000 점 이상 획득 시 시작
+        if my_character.score >= 3000:
             if my_enemy.BossMove() == "finish": # 보스 물리침
                 my_character.score += 10000
                 Finish()
@@ -190,7 +190,7 @@ def main():
             my_character.Throw()
                 
         # A + B Pressed = Air Bombardment
-        if not joystick.button_A.value and not joystick.button_B.value and my_character.airbombardmentCount == True: # Air Bombardment
+        if not joystick.button_A.value and not joystick.button_B.value and my_character.airbombardmentCount == True:
             my_character.airbombardment = True
             my_character.airbombardmentCount = False
 
@@ -258,9 +258,9 @@ def main():
 
                 
                 # 수류탄 xy 좌표 이동
-                throwPos[1] -= math.sin(math.radians(my_character.throwAngle)) * 8 * -1 # 수류탄 위로 이동
+                throwPos[1] -= math.sin(math.radians(my_character.throwAngle)) * 8 * -1 # sin함수를 이용하여 수류탄 위로 이동
                 if my_character.greTargetPos[0] < throwPos[0]:
-                    throwPos[0] -= math.cos(math.radians(my_character.throwAngle)) * 8 # 수류탄 좌우로 이동
+                    throwPos[0] -= math.cos(math.radians(my_character.throwAngle)) * 8 # cos함수를 이용하여 수류탄 좌우로 이동
                 elif my_character.greTargetPos[0] > throwPos[0]:
                     throwPos[0] += math.cos(math.radians(my_character.throwAngle)) * 8
 
